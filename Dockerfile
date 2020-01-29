@@ -31,7 +31,7 @@ RUN groupadd -g 1000 docker1000 && useradd -s /bin/sh -u $USER_UID -g $USER_GID 
     echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME && \
     chmod 0440 /etc/sudoers.d/$USERNAME
 # Install Alpine packages
-RUN dnf install -y -q libstdc++ zsh sudo git wget tar gcc-c++ openssl-devel libcurl-devel make
+RUN dnf install -y -q libstdc++ which zsh sudo git wget tar gcc-c++ openssl-devel libcurl-devel make
 
 COPY --from=docker-cli --chown=${USER_UID}:${USER_GID} /usr/local/bin/docker /usr/local/bin/docker
 COPY --from=docker-compose --chown=${USER_UID}:${USER_GID} /usr/local/bin/docker-compose /usr/local/bin/docker-compose
@@ -45,10 +45,10 @@ RUN ([ ${USER_GID} = 1000 ] || (groupadd -f -g 1000 docker1000 && usermod -a -G 
 # Setup shells
 ENV EDITOR=nano \
     LANG=en_US.UTF-8
-RUN dnf install shadow-utils && \
+RUN dnf install -y shadow-utils && \
     usermod --shell /bin/zsh root && \
     usermod --shell /bin/zsh ${USERNAME} && \
-    dnf remove shadow-utils
+    dnf remove -y shadow-utils
 COPY --chown=${USER_UID}:${USER_GID} shell/.p10k.zsh shell/.zshrc shell/.welcome.sh /home/${USERNAME}/
 RUN ln -s /home/${USERNAME}/.p10k.zsh /root/.p10k.zsh && \
     cp /home/${USERNAME}/.zshrc /root/.zshrc && \
@@ -61,5 +61,7 @@ RUN git clone --single-branch --depth 1 https://github.com/robbyrussell/oh-my-zs
     chown -R ${USERNAME}:${USER_GID} /home/${USERNAME}/.oh-my-zsh && \
     chmod -R 700 /home/${USERNAME}/.oh-my-zsh && \
     cp -r /home/${USERNAME}/.oh-my-zsh /root/.oh-my-zsh && \
-    chown -R root:root /root/.oh-my-zsh
+    chown -R root:root /root/.oh-my-zsh && \
+    chown -R ${USERNAME}:${USER_GID} /home/${USERNAME}
+
 USER ${USERNAME}
